@@ -5,26 +5,34 @@ namespace R3.Triggers
     [DisallowMultipleComponent]
     public class ObservableLateUpdateTrigger : ObservableTriggerBase
     {
-        Subject<Unit> lateUpdate;
+        SingleAssignmentSubject<Unit> lateUpdate;
+        Observable<Unit> enablerStream;
+
+        private void Awake()
+        {
+            this.enabled = false;
+            lateUpdate = new();
+            enablerStream = lateUpdate.Do(this,
+                    onSubscribe: m => m.enabled = true,
+                    onDispose: m => m.enabled = false)
+                .Share();
+        }
 
         /// <summary>LateUpdate is called every frame, if the Behaviour is enabled.</summary>
         void LateUpdate()
         {
-            if (lateUpdate != null) lateUpdate.OnNext(Unit.Default);
+            lateUpdate.OnNext(Unit.Default);
         }
 
         /// <summary>LateUpdate is called every frame, if the Behaviour is enabled.</summary>
         public Observable<Unit> LateUpdateAsObservable()
         {
-            return lateUpdate ?? (lateUpdate = new Subject<Unit>());
+            return enablerStream;
         }
 
         protected override void RaiseOnCompletedOnDestroy()
         {
-            if (lateUpdate != null)
-            {
-                lateUpdate.OnCompleted();
-            }
+            lateUpdate.OnCompleted();
         }
     }
 }
