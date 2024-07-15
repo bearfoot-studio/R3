@@ -6,25 +6,33 @@ namespace R3.Triggers
     public class ObservableUpdateTrigger : ObservableTriggerBase
     {
         Subject<Unit> update;
+        Observable<Unit> enablerStream;
+
+        private void Awake()
+        {
+            this.enabled = false;
+            update = new Subject<Unit>();
+            enablerStream = update.Do(this,
+                    onSubscribe: m => m.enabled = true,
+                    onDispose: m => m.enabled = false)
+                .Publish().RefCount();
+        }
 
         /// <summary>Update is called every frame, if the MonoBehaviour is enabled.</summary>
         void Update()
         {
-            if (update != null) update?.OnNext(Unit.Default);
+            update.OnNext(Unit.Default);
         }
 
         /// <summary>Update is called every frame, if the MonoBehaviour is enabled.</summary>
         public Observable<Unit> UpdateAsObservable()
         {
-            return update ?? (update = new Subject<Unit>());
+            return enablerStream;
         }
 
         protected override void RaiseOnCompletedOnDestroy()
         {
-            if (update != null)
-            {
-                update.OnCompleted();
-            }
+            update.OnCompleted();
         }
     }
 }
