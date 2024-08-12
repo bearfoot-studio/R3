@@ -58,7 +58,7 @@ namespace R3.Triggers
         public static Observable<Collision> OnCollisionEnterAsObservable(this GameObject gameObject)
         {
             if (gameObject == null) return Observable.Empty<Collision>();
-            return GetOrAddComponent<ObservableCollisionTrigger>(gameObject).OnCollisionEnterAsObservable();
+            return GetOrAddComponent<ObservableOnCollisionEnterTrigger>(gameObject).AsObservable();
         }
 
 
@@ -66,14 +66,14 @@ namespace R3.Triggers
         public static Observable<Collision> OnCollisionExitAsObservable(this GameObject gameObject)
         {
             if (gameObject == null) return Observable.Empty<Collision>();
-            return GetOrAddComponent<ObservableCollisionTrigger>(gameObject).OnCollisionExitAsObservable();
+            return GetOrAddComponent<ObservableOnCollisionExitTrigger>(gameObject).AsObservable();
         }
 
         /// <summary>OnCollisionStay is called once per frame for every collider/rigidbody that is touching rigidbody/collider.</summary>
         public static Observable<Collision> OnCollisionStayAsObservable(this GameObject gameObject)
         {
             if (gameObject == null) return Observable.Empty<Collision>();
-            return GetOrAddComponent<ObservableCollisionTrigger>(gameObject).OnCollisionStayAsObservable();
+            return GetOrAddComponent<ObservableOnCollisionStayTrigger>(gameObject).AsObservable();
         }
 #endif
         #endregion
@@ -344,12 +344,8 @@ namespace R3.Triggers
         static T GetOrAddComponent<T>(GameObject gameObject)
             where T : Component
         {
-            var component = gameObject.GetComponent<T>();
-            if (component == null)
-            {
+            if (!gameObject.TryGetComponent<T>(out var component))
                 component = gameObject.AddComponent<T>();
-            }
-
             return component;
         }
     }
